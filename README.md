@@ -1,34 +1,4 @@
-# 🧦 Chaussettes.io - Analyse de Logs Distribuée
-
-Ce projet permet d'analyser des logs HTTP en temps réel et en batch à l'aide de Kafka et Spark. Il génère des alertes basées sur des seuils définis et fournit des statistiques sur les erreurs.
-
-## Structure du projet
-
-- **`docker-compose.yml`** : Configuration Docker Compose pour orchestrer les services.
-- **`Makefile`** : Commandes utiles pour gérer le projet.
-- **`requirements.txt`** : Dépendances Python nécessaires.
-- **`seuils.json`** : Fichier contenant les seuils d'erreurs.
-- **`app/`** :
-  - `log_gen.py` : Générateur de logs HTTP.
-  - `sparkSeuilCalcul.py` : Script Spark pour le calcul des seuils en batch.
-  - `sparkStreaming.py` : Script Spark pour l'analyse des logs en temps réel.
-- **`data/`** :
-  - `seuils.json` : Fichier généré contenant les seuils calculés et les statistiques.
-
-## Prérequis
-
-- Docker et Docker Compose installés.
-- Ports `2181`, `9092`, `8080`, et `7077` disponibles.
-
-## Installation
-
-1. Clonez le dépôt :
-   ```bash
-   git clone <URL_DU_DEPOT>
-   cd traitement-dist-chaussettes-CEREN
-   ```
-
-# Chaussettes.io - Analyse de Logs en Temps Réel
+# 🧦 Chaussettes.io - Analyse de Logs en Temps Réel
 
 Application d'analyse de logs HTTP utilisant Apache Spark et Kafka pour détecter les anomalies et générer des alertes en temps réel.
 
