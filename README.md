@@ -1,4 +1,4 @@
-# Chaussettes.io - Analyse de Logs Distribuée
+# 🧦 Chaussettes.io - Analyse de Logs Distribuée
 
 Ce projet permet d'analyser des logs HTTP en temps réel et en batch à l'aide de Kafka et Spark. Il génère des alertes basées sur des seuils définis et fournit des statistiques sur les erreurs.
 
