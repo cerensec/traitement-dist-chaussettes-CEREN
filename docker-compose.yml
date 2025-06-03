@@ -1,0 +1,147 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - chaussettes-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - chaussettes-network
+  
+  spark-master:
+    image: bitnami/spark:3.5.0
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ./app:/app
+      - ./data:/data
+      - spark-logs:/opt/bitnami/spark/logs
+    networks:
+      - chaussettes-network
+    
+  spark-worker:
+    image: bitnami/spark:3.5.0
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    depends_on:
+      - spark-master
+    volumes:
+      - ./app:/app
+      - ./data:/data
+    networks:
+      - chaussettes-network
+
+  log-generator:
+    build: 
+      context: .
+      dockerfile: Dockerfile.log-generator
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+    volumes:
+      - ./app:/app
+      - ./data:/data
+    networks:
+      - chaussettes-network
+    command: >
+      sh -c "sleep 30 && python /app/log_gen.py --kafka-broker kafka:9092 --rate 5 --error-rate 15 --error-users 20 --error-urls 15"
+  
+  spark-streaming:
+    build: 
+      context: .
+      dockerfile: Dockerfile.spark-app
+    depends_on:
+      - kafka
+      - spark-master
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - KAFKA_BROKER=kafka:9092
+    volumes:
+      - ./app:/app
+      - ./data:/data
+      - ./seuils.json:/app/seuils.json
+    networks:
+      - chaussettes-network
+    command: >
+      sh -c "sleep 60 && spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 sparkStreaming.py"
+
+  spark-batch:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark-app
+    depends_on:
+      - kafka
+      - spark-master
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - KAFKA_BROKER=kafka:9092
+    volumes:
+      - ./app:/app
+      - ./data:/data
+    networks:
+      - chaussettes-network
+    profiles:
+      - batch
+    command: >
+      sh -c "sleep 90 && spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 /app/sparkSeuilCalcul.py"
+
+  kafka-topics-setup:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - kafka
+    networks:
+      - chaussettes-network
+    command: >
+      sh -c "
+        echo '⏳ Attente que Kafka soit disponible...' &&
+        until kafka-topics --bootstrap-server kafka:9092 --list 2>/dev/null; do
+          echo 'Kafka pas encore prêt...'; sleep 5;
+        done &&
+        echo '✅ Kafka disponible. Création des topics...' &&
+        kafka-topics --bootstrap-server kafka:9092 --create --topic http-logs --partitions 3 --replication-factor 1 --if-not-exists &&
+        kafka-topics --bootstrap-server kafka:9092 --create --topic alerts --partitions 2 --replication-factor 1 --if-not-exists &&
+        echo '🎉 Topics créés avec succès'"
+
+volumes:
+  kafka-data:
+  spark-logs:
+
+networks:
+  chaussettes-network:
+    driver: bridge

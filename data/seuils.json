@@ -1,0 +1,69 @@
+{
+  "global": 0.05,
+  "ip": 0.297,
+  "url": 0.3,
+  "metadata": {
+    "calculated_at": "2025-06-03T14:19:11.606283",
+    "total_logs_analyzed": 3416,
+    "total_errors": 539,
+    "global_error_rate": 0.1578,
+    "method": "percentile_99",
+    "analysis_period_minutes": 30,
+    "ips_analyzed": 100,
+    "urls_analyzed": 57,
+    "top_error_ips": [
+      {
+        "ip": "192.168.1.75",
+        "error_rate": 0.371,
+        "total_requests": 35
+      },
+      {
+        "ip": "192.168.1.93",
+        "error_rate": 0.296,
+        "total_requests": 27
+      },
+      {
+        "ip": "192.168.1.24",
+        "error_rate": 0.296,
+        "total_requests": 27
+      },
+      {
+        "ip": "192.168.1.4",
+        "error_rate": 0.27,
+        "total_requests": 37
+      },
+      {
+        "ip": "192.168.1.71",
+        "error_rate": 0.259,
+        "total_requests": 27
+      }
+    ],
+    "top_error_urls": [
+      {
+        "url": "/produit/chaussette-20",
+        "error_rate": 0.327,
+        "total_requests": 52
+      },
+      {
+        "url": "/about",
+        "error_rate": 0.25,
+        "total_requests": 64
+      },
+      {
+        "url": "/produit/chaussette-11",
+        "error_rate": 0.238,
+        "total_requests": 63
+      },
+      {
+        "url": "/produit/chaussette-38",
+        "error_rate": 0.227,
+        "total_requests": 66
+      },
+      {
+        "url": "/produit/chaussette-10",
+        "error_rate": 0.224,
+        "total_requests": 67
+      }
+    ]
+  }
+}

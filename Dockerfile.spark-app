@@ -1,0 +1,24 @@
+FROM bitnami/spark:3.5.0
+
+USER root
+
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir \
+    kafka-python==2.0.2 \
+    pyspark==3.5.0 \
+    numpy==2.0.2
+
+RUN mkdir -p /app /data
+
+COPY app/ /app/
+
+ENV PYTHONPATH=/app
+ENV SPARK_MASTER_URL=spark://spark-master:7077
+ENV KAFKA_BROKER=kafka:9092
+
+WORKDIR /app
+
+USER 1001

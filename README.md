@@ -1,112 +1,161 @@
-# 🧦 Projet Chaussettes.io – Analyse de logs en temps réel
+# Chaussettes.io - Analyse de Logs Distribuée
 
-Ce projet consiste à développer un système d'analyse de logs HTTP en temps réel pour l'entreprise fictive **Chaussettes.io**, à l'aide de **Python**, **Apache Spark** et **Kafka**. Il est divisé en trois étapes évolutives : **version minimale**, **version complète**, et **version finale**.
+Ce projet permet d'analyser des logs HTTP en temps réel et en batch à l'aide de Kafka et Spark. Il génère des alertes basées sur des seuils définis et fournit des statistiques sur les erreurs.
 
----
+## Structure du projet
 
-## 📁 Structure du dépôt
+- **`docker-compose.yml`** : Configuration Docker Compose pour orchestrer les services.
+- **`Makefile`** : Commandes utiles pour gérer le projet.
+- **`requirements.txt`** : Dépendances Python nécessaires.
+- **`seuils.json`** : Fichier contenant les seuils d'erreurs.
+- **`app/`** :
+  - `log_gen.py` : Générateur de logs HTTP.
+  - `sparkSeuilCalcul.py` : Script Spark pour le calcul des seuils en batch.
+  - `sparkStreaming.py` : Script Spark pour l'analyse des logs en temps réel.
+- **`data/`** :
+  - `seuils.json` : Fichier généré contenant les seuils calculés et les statistiques.
+
+## Prérequis
+
+- Docker et Docker Compose installés.
+- Ports `2181`, `9092`, `8080`, et `7077` disponibles.
+
+## Installation
+
+1. Clonez le dépôt :
+   ```bash
+   git clone <URL_DU_DEPOT>
+   cd traitement-dist-chaussettes-CEREN
+   ```
+
+# Chaussettes.io - Analyse de Logs en Temps Réel
+
+Application d'analyse de logs HTTP utilisant Apache Spark et Kafka pour détecter les anomalies et générer des alertes en temps réel.
+
+## 🏗 Architecture
+
+- Générateur de logs HTTP simulés
+- Pipeline Kafka pour le streaming des logs
+- Job Spark Streaming pour l'analyse en temps réel
+- Job Spark Batch pour le calcul des seuils
+- Système d'alertes basé sur des seuils configurables
+
+## 📋 Prérequis
+
+- Docker et Docker Compose
+- ~4GB RAM disponible
+- Ports disponibles:
+  - 2181 (ZooKeeper)
+  - 9092 (Kafka)
+  - 8080 (Spark UI)
+  - 7077 (Spark Master)
+
+## 🚀 Démarrage rapide
+
+1. Cloner le projet:
+
+```bash
+git clone <url-du-repo>
+cd traitement-dist-chaussettes-CEREN
+```
+
+2. Construire les images:
+
+```bash
+make build
+```
+
+3. Démarrer l'infrastructure:
+
+```bash
+make up
+```
+
+4. Vérifier que tout fonctionne:
+
+```bash
+make status
+```
+
+## 📊 Interfaces Web
+
+- Spark UI: http://localhost:8080
+
+## 🔍 Commandes utiles
+
+### Voir les logs
+
+```bash
+make logs                # Tous les services
+make logs-generator      # Générateur de logs
+make logs-streaming     # Job Spark Streaming
+make logs-kafka        # Broker Kafka
+```
+
+### Kafka
+
+```bash
+make kafka-topics          # Lister les topics
+make kafka-consume-logs    # Voir les logs en direct
+make kafka-consume-alerts  # Voir les alertes en direct
+```
+
+### Gestion des seuils
+
+```bash
+make batch-thresholds     # Calculer les nouveaux seuils
+```
+
+### Administration
+
+```bash
+make stop                 # Arrêter temporairement
+make restart             # Redémarrer tous les services
+make down                # Arrêter et supprimer les conteneurs
+make clean-volumes       # Nettoyer les volumes
+```
+
+## 📁 Structure du projet
 
 ```
 .
-├── minimal/                    # Version minimale
-│   ├── log_generator.py
-│   └── spark_streaming_analyzer.py
-│
-├── complet/                    # Version complète
-│   ├── log_generator.py
-│   ├── spark_streaming_analyzer.py
-│   ├── conf/
-│   │   └── spark-defaults.conf
-│   └── README.md
-│
-├── finale/                     # (À venir) Version finale avec Kafka, seuils, alertes, etc.
-└── README.md                   # Ce fichier
+├── app/                    # Code source Python
+│   ├── log_gen.py         # Générateur de logs
+│   ├── sparkSeuilCalcul.py # Calcul des seuils
+│   └── sparkStreaming.py  # Analyse temps réel
+├── data/                  # Données persistantes
+│   └── seuils.json       # Seuils calculés
+├── docker-compose.yml     # Configuration Docker
+├── Dockerfile.*          # Images Docker
+├── Makefile             # Commandes Make
+├── requirements.txt     # Dépendances Python
+└── seuils.json         # Configuration des seuils
 ```
 
----
+## ⚙️ Configuration
 
-## 🧪 Prérequis
+Les seuils d'alerte sont configurables dans `seuils.json`:
 
-- Python ≥ 3.8
-- Java JDK ≥ 17
-- Apache Spark (3.4.1 ou 4.0.0)
-- PySpark (`pip install pyspark`)
-
----
-
-## 🧩 Version 1 : minimale
-
-### 🎯 Objectif :
-- Générer 1 ligne de log HTTP Apache par seconde (aléatoire).
-- Lire ces logs via une socket avec Spark Streaming.
-- Afficher les erreurs HTTP détectées (codes ≥ 400).
-
-### ▶️ Lancement :
-
-Dans un terminal :
-```bash
-python minimal/minimal.py
+```json
+{
+  "global": 0.1,
+  "ip": 0.3,
+  "url": 0.5
+}
 ```
 
-Puis dans un autre :
-```bash
-python minimal/sparkStreaming.py
-```
+## 🐛 Dépannage
 
----
-
-## 🧩 Version 2 : complète
-
-### 🎯 Objectif :
-- Générateur de logs **configurable via argparse**
-- Contrôle du taux d'erreurs par utilisateurs et par URLs
-- Configuration du **chiffrement et de l'authentification Spark** pour la production
-
-### ⚙️ Paramètres du générateur (`log_gen.py`)
-
-| Argument | Description |
-|----------|-------------|
-| `--rate` | Nombre de logs générés par seconde |
-| `--error-users` | % d'utilisateurs qui génèrent des erreurs |
-| `--error-rate` | % des requêtes erronées chez ces utilisateurs |
-| `--error-urls` | % d'URLs susceptibles de générer des erreurs |
-| `--host` | Hôte pour le socket (par défaut : `localhost`) |
-| `--port` | Port d'écoute (par défaut : `9999`) |
-
-### ▶️ Exemple de lancement :
+1. Si Kafka n'est pas disponible:
 
 ```bash
-python complet/log_gen.py --rate 10 --error-users 30 --error-rate 60 --error-urls 50
+make down
+make clean-volumes
+make up
 ```
 
-### 🧠 Analyse Spark Streaming :
+2. Pour redémarrer un service spécifique:
 
 ```bash
-python complet/sparkStreamingComplet.py
+docker-compose restart <service-name>
 ```
-
-### 🔐 Sécurité – Configuration Spark pour la production
-
-Un fichier `spark-defaults.conf` est fourni dans `complet/conf/`. Il contient :
-
-```properties
-spark.authenticate true
-spark.authenticate.secret chaussettesIo
-spark.network.crypto.enabled true
-spark.io.encryption.enabled true
-```
-
-⚠️ **Note** : cette configuration est prête pour un déploiement sécurisé en production. Elle n'est **pas activée en environnement local** mais peut être intégrée directement via `--properties-file` ou `.config()` dans Spark.
-
----
-
-## 🧩 Version 3 : finale (à venir)
-
-### 🎯 Objectif :
-- Envoi des logs dans Kafka (`http-logs`)
-- Analyse Spark Streaming lisant Kafka et publiant des alertes dans `alerts`
-- Détermination automatique des seuils via Spark batch
-- Déploiement automatisé (ex : `docker-compose`)
-- Documentation pour l'extensibilité du système
-
----
