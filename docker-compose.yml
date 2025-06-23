@@ -129,14 +129,14 @@ services:
       - chaussettes-network
     command: >
       sh -c "
-        echo '⏳ Attente que Kafka soit disponible...' &&
+        echo 'Attente que Kafka soit disponible...' &&
         until kafka-topics --bootstrap-server kafka:9092 --list 2>/dev/null; do
           echo 'Kafka pas encore prêt...'; sleep 5;
         done &&
-        echo '✅ Kafka disponible. Création des topics...' &&
+        echo 'Kafka disponible. Création des topics...' &&
         kafka-topics --bootstrap-server kafka:9092 --create --topic http-logs --partitions 3 --replication-factor 1 --if-not-exists &&
         kafka-topics --bootstrap-server kafka:9092 --create --topic alerts --partitions 2 --replication-factor 1 --if-not-exists &&
-        echo '🎉 Topics créés avec succès'"
+        echo 'Topics créés avec succès'"
 
 volumes:
   kafka-data:
